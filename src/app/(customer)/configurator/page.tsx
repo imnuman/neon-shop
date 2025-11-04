@@ -2,7 +2,7 @@
 
 import { Header } from '@/components/shared/Header'
 import { Footer } from '@/components/shared/Footer'
-import { Canvas3D } from '@/components/configurator/Canvas3D'
+import nextDynamic from 'next/dynamic'
 import { ControlPanel } from '@/components/configurator/ControlPanel'
 import { Button } from '@/components/ui/button'
 import { QuoteForm } from '@/components/configurator/QuoteForm'
@@ -10,6 +10,16 @@ import { useState } from 'react'
 
 // Disable static generation - this page uses Three.js which requires client-side rendering
 export const dynamic = 'force-dynamic'
+
+// Dynamically import Canvas3D with SSR disabled to prevent build-time errors
+const Canvas3D = nextDynamic(() => import('@/components/configurator/Canvas3D').then(mod => ({ default: mod.Canvas3D })), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="text-white">Loading 3D preview...</div>
+    </div>
+  ),
+})
 
 export default function ConfiguratorPage() {
   const [showQuoteForm, setShowQuoteForm] = useState(false)

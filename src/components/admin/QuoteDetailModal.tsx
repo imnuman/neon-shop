@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import nextDynamic from 'next/dynamic'
 import {
   Dialog,
   DialogContent,
@@ -11,10 +12,19 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Canvas3D } from '@/components/configurator/Canvas3D'
 import { useConfiguratorStore } from '@/stores/configuratorStore'
 import { useEffect } from 'react'
 import { Check, X } from 'lucide-react'
+
+// Dynamically import Canvas3D with SSR disabled to prevent build-time errors
+const Canvas3D = nextDynamic(() => import('@/components/configurator/Canvas3D').then(mod => ({ default: mod.Canvas3D })), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="text-white">Loading 3D preview...</div>
+    </div>
+  ),
+})
 
 interface Quote {
   id: string
