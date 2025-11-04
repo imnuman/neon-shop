@@ -1,0 +1,99 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: neon-shop-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-neonshop}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-neonshop}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - neon-network
+
+  # Next.js Application
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    container_name: neon-shop-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-neonshop}?schema=public
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://yourdomain.com}
+    volumes:
+      - ../prisma:/app/prisma
+    networks:
+      - neon-network
+    command: sh -c "npx prisma migrate deploy && node server.js"
+    # Note: No ports exposed externally - Nginx will handle that
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: neon-shop-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx configuration
+      - ./conf.d/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # SSL certificates (mount your Let's Encrypt certs here)
+      - ./ssl:/etc/nginx/ssl:ro
+      # Cache directory
+      - nginx_cache:/var/cache/nginx
+      # Logs
+      - ./logs:/var/log/nginx
+      # Certbot webroot (for SSL renewal)
+      - certbot_webroot:/var/www/certbot:ro
+    networks:
+      - neon-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Certbot for SSL (optional - for initial setup and renewal)
+  certbot:
+    image: certbot/certbot
+    container_name: neon-shop-certbot
+    volumes:
+      - ./ssl:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - neon-network
+
+networks:
+  neon-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  nginx_cache:
+    driver: local
+  certbot_webroot:
+    driver: local
