@@ -6,6 +6,8 @@ import { QuoteTable } from '@/components/admin/QuoteTable'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery } from '@tanstack/react-query'
 
+export const dynamic = 'force-dynamic'
+
 export default function AdminQuotesPage() {
   const { data: quotes, isLoading } = useQuery({
     queryKey: ['admin-quotes'],

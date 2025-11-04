@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { QuoteForm } from '@/components/configurator/QuoteForm'
 import { useState } from 'react'
 
+export const dynamic = 'force-dynamic'
+
 export default function ConfiguratorPage() {
   const [showQuoteForm, setShowQuoteForm] = useState(false)
 
