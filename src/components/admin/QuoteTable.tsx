@@ -10,12 +10,17 @@ interface Quote {
   quoteNumber: string
   status: string
   customText: string
+  fontStyle: string
+  color: string
+  size: string
+  material: string
   calculatedPrice: number
   customer: {
     name: string | null
     email: string
   }
   createdAt: string
+  customerNotes?: string
 }
 
 interface QuoteTableProps {
