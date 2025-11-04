@@ -27,9 +27,11 @@ RUN npm ci --legacy-peer-deps && \
 # Copy all source files
 COPY . .
 
-# Set environment variable for build
+# Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# Dummy DATABASE_URL for build (will be replaced at runtime)
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db?schema=public"
 
 # Build the application
 RUN npm run build
