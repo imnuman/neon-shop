@@ -16,18 +16,23 @@ FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install ALL dependencies (including dev dependencies for build)
+RUN npm ci --legacy-peer-deps && \
+    npx prisma generate
+
+# Copy all source files
 COPY . .
 
 # Set environment variable for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Install dev dependencies and build
-RUN npm install --legacy-peer-deps && \
-    npx prisma generate && \
-    npm run build
+# Build the application
+RUN npm run build
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner
