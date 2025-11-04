@@ -1,0 +1,194 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum QuoteStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CUSTOMER_APPROVED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  IN_PRODUCTION
+  QUALITY_CHECK
+  READY_TO_SHIP
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum ProductType {
+  PREMADE
+  CUSTOM
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  phone         String?
+  role          UserRole @default(CUSTOMER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  quotes        Quote[]
+  orders        Order[]
+  savedDesigns  SavedDesign[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  type        ProductType
+  basePrice   Float
+  imageUrl    String?
+  modelUrl    String?     // 3D model file path
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  orders      Order[]
+}
+
+model Quote {
+  id                String      @id @default(cuid())
+  quoteNumber       String      @unique
+  status            QuoteStatus @default(PENDING)
+  
+  // Design Configuration
+  customText        String
+  fontStyle         String
+  color             String
+  size              String
+  material          String
+  backing           String?
+  mounting          String?
+  powerOption       String?
+  
+  // Pricing
+  calculatedPrice   Float
+  approvedPrice     Float?
+  
+  // Customer Info
+  customerId        String
+  customer          User        @relation(fields: [customerId], references: [id])
+  customerNotes     String?
+  
+  // Business Response
+  businessNotes     String?
+  estimatedDelivery DateTime?
+  depositRequired   Float?
+  
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  approvedAt        DateTime?
+  
+  // Relations
+  order             Order?
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique
+  status            OrderStatus @default(PENDING_PAYMENT)
+  
+  // Product Info
+  productId         String?
+  product           Product?    @relation(fields: [productId], references: [id])
+  
+  // Quote Reference (for custom orders)
+  quoteId           String?     @unique
+  quote             Quote?      @relation(fields: [quoteId], references: [id])
+  
+  // Design (if custom)
+  customText        String?
+  fontStyle         String?
+  color             String?
+  size              String?
+  material          String?
+  
+  // Pricing
+  totalPrice        Float
+  depositPaid       Float?
+  balancePaid       Float?
+  
+  // Customer
+  customerId        String
+  customer          User        @relation(fields: [customerId], references: [id])
+  
+  // Delivery
+  shippingAddress   String
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+  trackingNumber    String?
+  
+  // Production
+  productionProgress Int       @default(0) // 0-100%
+  productionNotes    String?
+  assignedTo         String?   // Worker name
+  
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  paidAt            DateTime?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  
+  // Relations
+  statusHistory     OrderStatusHistory[]
+  messages          Message[]
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id])
+  status    OrderStatus
+  notes     String?
+  createdAt DateTime    @default(now())
+  createdBy String      // User who made the change
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  fromUserId String
+  message    String
+  isInternal Boolean  @default(false) // Internal notes vs customer-facing
+  createdAt  DateTime @default(now())
+}
+
+model SavedDesign {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  customText  String
+  fontStyle   String
+  color       String
+  size        String
+  material    String
+  backing     String?
+  mounting    String?
+  powerOption String?
+  previewUrl  String?  // Screenshot of 3D preview
+  createdAt   DateTime @default(now())
+}
