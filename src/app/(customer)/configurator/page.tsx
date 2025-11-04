@@ -7,6 +7,7 @@ import { ControlPanel } from '@/components/configurator/ControlPanel'
 import { Button } from '@/components/ui/button'
 import { QuoteForm } from '@/components/configurator/QuoteForm'
 import { useState } from 'react'
+import { useConfiguratorStore } from '@/stores/configuratorStore'
 
 // Disable static generation - this page uses Three.js which requires client-side rendering
 export const dynamic = 'force-dynamic'
@@ -23,6 +24,7 @@ const Canvas3D = nextDynamic(() => import('@/components/configurator/Canvas3D').
 
 export default function ConfiguratorPage() {
   const [showQuoteForm, setShowQuoteForm] = useState(false)
+  const config = useConfiguratorStore()
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
@@ -57,8 +59,22 @@ export default function ConfiguratorPage() {
                   variant="outline" 
                   size="lg"
                   onClick={() => {
-                    // TODO: Save design functionality
-                    console.log('Save design')
+                    // Save design functionality - show feedback
+                    const saved = localStorage.getItem('savedDesigns')
+                    const designs = saved ? JSON.parse(saved) : []
+                    const newDesign = {
+                      id: Date.now().toString(),
+                      text: config.text,
+                      color: config.color,
+                      size: config.size,
+                      material: config.material,
+                      fontStyle: config.fontStyle,
+                      price: config.price,
+                      savedAt: new Date().toISOString(),
+                    }
+                    designs.unshift(newDesign)
+                    localStorage.setItem('savedDesigns', JSON.stringify(designs.slice(0, 10))) // Keep last 10
+                    alert('Design saved successfully! You can access it from your dashboard.')
                   }}
                 >
                   Save Design
