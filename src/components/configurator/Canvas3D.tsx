@@ -2,11 +2,25 @@
 
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
-import { Suspense } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { NeonText3D } from './NeonText3D'
 import { Lighting } from './Lighting'
 
 export function Canvas3D() {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+        <div className="text-white">Loading 3D preview...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full h-full bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 rounded-lg overflow-hidden">
       <Canvas>

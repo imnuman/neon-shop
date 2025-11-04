@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { CreateQuoteRequest } from '@/types/quote'
 
+// Disable static generation for API routes
+export const dynamic = 'force-dynamic'
+
 // Generate unique quote number
 function generateQuoteNumber(): string {
   const prefix = 'QT'

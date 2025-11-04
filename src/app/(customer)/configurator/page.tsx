@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button'
 import { QuoteForm } from '@/components/configurator/QuoteForm'
 import { useState } from 'react'
 
+// Disable static generation - this page uses Three.js which requires client-side rendering
+export const dynamic = 'force-dynamic'
+
 export default function ConfiguratorPage() {
   const [showQuoteForm, setShowQuoteForm] = useState(false)
 

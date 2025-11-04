@@ -16,6 +16,9 @@ interface Quote {
   createdAt: string
 }
 
+// Disable static generation - this page requires database access
+export const dynamic = 'force-dynamic'
+
 export default function DashboardPage() {
   const { data: quotes, isLoading } = useQuery({
     queryKey: ['quotes'],
