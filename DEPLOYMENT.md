@@ -190,76 +190,94 @@ docker compose restart app
 
 ## 🌐 Production Deployment with Nginx
 
-### 1. Install Nginx
+We provide production-ready Nginx configurations in the `nginx/` directory with:
+- ✅ SSL/TLS with Let's Encrypt
+- ✅ Security headers (HSTS, CSP, XSS protection)
+- ✅ Rate limiting
+- ✅ Static asset caching
+- ✅ Gzip compression
+- ✅ Load balancing ready
+
+### Quick Setup with Automated Script
+
+The easiest way to set up Nginx:
 
 ```bash
-sudo apt update
-sudo apt install -y nginx
+# Navigate to nginx directory
+cd nginx
+
+# Run automated setup script
+sudo ./setup-nginx.sh
 ```
 
-### 2. Configure Nginx Reverse Proxy
+The script will:
+1. Install Nginx and Certbot
+2. Configure your domain
+3. Set up SSL with Let's Encrypt
+4. Configure firewall rules
+5. Start and enable services
 
-Create Nginx configuration:
+**For detailed Nginx documentation, see [`nginx/README.md`](nginx/README.md)**
+
+### Manual Setup Options
+
+#### Option 1: Basic HTTP Setup (Development)
 
 ```bash
-sudo nano /etc/nginx/sites-available/neon-shop
-```
+# Copy basic configuration
+sudo cp nginx/neon-shop-basic.conf /etc/nginx/sites-available/neon-shop
 
-Add the following configuration:
+# Update domain name
+sudo sed -i 's/yourdomain.com/your-actual-domain.com/g' /etc/nginx/sites-available/neon-shop
 
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com www.yourdomain.com;
-
-    client_max_body_size 10M;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-}
-```
-
-Enable the site:
-
-```bash
-# Create symbolic link
+# Enable site
 sudo ln -s /etc/nginx/sites-available/neon-shop /etc/nginx/sites-enabled/
-
-# Test Nginx configuration
+sudo rm /etc/nginx/sites-enabled/default  # Remove default site
 sudo nginx -t
-
-# Restart Nginx
-sudo systemctl restart nginx
+sudo systemctl reload nginx
 ```
 
-### 3. Set Up SSL with Let's Encrypt (Recommended)
+#### Option 2: Production Setup with SSL
 
 ```bash
-# Install Certbot
-sudo apt install -y certbot python3-certbot-nginx
+# Install dependencies
+sudo apt update
+sudo apt install -y nginx certbot python3-certbot-nginx
+
+# Copy production configuration
+sudo cp nginx/neon-shop-production.conf /etc/nginx/sites-available/neon-shop
+
+# Update domain name
+sudo sed -i 's/yourdomain.com/your-actual-domain.com/g' /etc/nginx/sites-available/neon-shop
+
+# Enable site
+sudo ln -s /etc/nginx/sites-available/neon-shop /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+
+# Test configuration
+sudo nginx -t
+sudo systemctl reload nginx
 
 # Obtain SSL certificate
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+sudo certbot --nginx -d your-actual-domain.com -d www.your-actual-domain.com
 
 # Test auto-renewal
 sudo certbot renew --dry-run
 ```
 
-Certbot will automatically update your Nginx configuration for HTTPS.
+#### Option 3: Docker Container Setup
 
-### 4. Update Environment Variables
+Run Nginx as a Docker container:
+
+```bash
+# Use the alternative docker-compose file with Nginx container
+docker compose -f nginx/docker-compose-with-nginx.yml up -d
+
+# View logs
+docker compose -f nginx/docker-compose-with-nginx.yml logs nginx
+```
+
+### Update Environment Variables
 
 Update `.env` with your domain:
 
@@ -272,6 +290,19 @@ Restart the app:
 ```bash
 docker compose restart app
 ```
+
+### Configuration Files Available
+
+| File | Purpose |
+|------|---------|
+| `nginx/neon-shop-basic.conf` | Simple HTTP setup |
+| `nginx/neon-shop-production.conf` | Full production with SSL, caching, security |
+| `nginx/conf.d/nginx.conf` | Docker container configuration |
+| `nginx/setup-nginx.sh` | Automated installation script |
+| `nginx/docker-compose-with-nginx.yml` | Full stack with Nginx container |
+| `nginx/README.md` | Comprehensive Nginx documentation |
+
+**📚 For troubleshooting, monitoring, and advanced configuration, see [`nginx/README.md`](nginx/README.md)**
 
 ---
 
