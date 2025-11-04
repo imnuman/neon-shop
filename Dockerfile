@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install dependencies
-RUN npm ci --only=production && \
+RUN npm ci --legacy-peer-deps --omit=dev && \
     npm cache clean --force
 
 # Stage 2: Builder
@@ -25,7 +25,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # Install dev dependencies and build
-RUN npm install && \
+RUN npm install --legacy-peer-deps && \
     npx prisma generate && \
     npm run build
 
