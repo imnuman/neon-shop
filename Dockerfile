@@ -30,11 +30,15 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-# Dummy DATABASE_URL for build (will be replaced at runtime)
-ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db?schema=public"
+
+# Create .env file with dummy DATABASE_URL for build
+RUN echo 'DATABASE_URL="postgresql://user:pass@localhost:5432/db?schema=public"' > .env
 
 # Build the application
 RUN npm run build
+
+# Remove build-time .env (will use runtime env vars)
+RUN rm -f .env
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner
